@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CHOG Engine | Temple Courtyard</title>
+<style>
+*{box-sizing:border-box}html,body,#stage{width:100%;height:100%;margin:0;overflow:hidden;background:#18251d}#stage{touch-action:none;cursor:grab}
+</style>
+</head>
+<body><div id="stage"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(()=> {
+const stage=document.querySelector('#stage'),scene=new THREE.Scene();
+scene.background=new THREE.Color(0x91a98c);scene.fog=new THREE.Fog(0x91a98c,65,230);
+const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,600);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;stage.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xe4f1d8,0x273326,2));
+const sun=new THREE.DirectionalLight(0xffe2ad,3);sun.position.set(-35,55,25);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);scene.add(sun);
+const mat=(color,roughness=.86)=>new THREE.MeshStandardMaterial({color,roughness});
+const stone=mat(0x777d70),paleStone=mat(0xa9ad96),darkStone=mat(0x414b3d),red=mat(0x982d25),wood=mat(0x4b3023),plaster=mat(0xd8c9aa),roof=mat(0x34483b),gold=mat(0xd5a84b),leaf=mat(0xf0b9ce),green=mat(0x385b37);
+function box(w,h,d,x,y,z,m,rz=0){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.rotation.z=rz;o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
+function cylinder(rt,rb,h,x,y,z,m,n=10){const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,n),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
+function sphere(r,x,y,z,m){const o=new THREE.Mesh(new THREE.IcosahedronGeometry(r,1),m);o.position.set(x,y,z);o.castShadow=true;scene.add(o);return o}
+// Raised, readable combat plaza with individual stone slabs.
+box(76,.8,50,0,-.45,-2,stone);
+for(let x=-36;x<=36;x+=6)box(.045,.025,49,x,.0,-2,darkStone);
+for(let z=-26;z<=22;z+=6)box(75,.025,.045,0,.0,z,darkStone);
+// Sanctuary hall and layered roofline.
+box(34,1.2,12,0,8,-43,stone);box(29,9,9,0,4.5,-43,plaster);box(9,7,.3,0,3.5,-38.35,darkStone);
+for(const x of [-13,-7,7,13]){cylinder(.55,.7,8,x,4,-37.8,wood,8);box(2,.5,2,x,.35,-37.8,stone)}
+for(let i=0;i<3;i++){const w=39-i*6,y=10.2+i*1.7;box(w,.7,12-i*1.5,0,y,-43,roof);box(w+2,.22,13-i*1.5,0,y+.42,-43,red)}
+const ped=new THREE.Mesh(new THREE.ConeGeometry(13,7,3),roof);ped.rotation.z=Math.PI;ped.scale.set(1,.7,.45);ped.position.set(0,17,-43);ped.castShadow=true;scene.add(ped);
+// Torii gate, red posts and crossbars.
+for(const x of [-9,9]){cylinder(.72,.9,12,x,6,-20,red,12);box(2.4,.6,2.4,x,.3,-20,paleStone)}
+box(24,1.1,2.2,0,11.6,-20,red);box(28,.65,2.8,0,12.45,-20,wood);box(15,.45,2,0,9.9,-20,red);
+// Four-tier pagoda on the right.
+const px=49,pz=-43;box(14,1.2,14,px,.4,pz,paleStone);
+for(let i=0;i<4;i++){const y=2+i*5.2,w=9-i*1.55;box(w,3.1,w,px,y+1.5,pz,plaster);box(w+1.8,.35,w+1.8,px,y+3.2,pz,red);const r=new THREE.Mesh(new THREE.ConeGeometry(w*.85,2.1,4),roof);r.rotation.y=Math.PI/4;r.position.set(px,y+4.4,pz);r.castShadow=true;scene.add(r)}
+cylinder(.16,.3,4,px,24,pz,gold,8);
+// Pond and rim stones.
+const water=new THREE.Mesh(new THREE.CircleGeometry(7.5,48),new THREE.MeshPhongMaterial({color:0x397a7b,specular:0xffffff,shininess:90}));water.rotation.x=-Math.PI/2;water.position.set(-49,.06,-39);scene.add(water);
+for(let i=0;i<24;i++){const a=i/24*Math.PI*2;sphere(.7,-49+Math.cos(a)*8,.32,-39+Math.sin(a)*8,paleStone)}
+// Cherry trees around the perimeter, keeping the centre open.
+const blossoms=[];
+for(let i=0;i<16;i++){const a=i/16*Math.PI*2,x=Math.cos(a)*49,z=-3+Math.sin(a)*29;if(Math.abs(x)<28&&z>0)continue;cylinder(.35,.55,7,x,3.5,z,wood,8);for(let j=0;j<6;j++){const b=sphere(2.4+Math.random()*1.3,x+(Math.random()-.5)*4,7+Math.random()*3,z+(Math.random()-.5)*4,leaf);b.scale.y=.75;blossoms.push(b)}}
+// Hanging banners.
+const banners=[];for(let i=0;i<6;i++){const x=i%2?-34:34,z=-18+Math.floor(i/2)*15;cylinder(.09,.13,8,x,4,z,wood,8);const b=new THREE.Mesh(new THREE.PlaneGeometry(2,4.8),red);b.position.set(x,5.2,z);b.castShadow=true;scene.add(b);banners.push(b)}
+// Mossy boundary stones and small lanterns.
+for(let i=0;i<34;i++){const a=i/34*Math.PI*2,x=Math.cos(a)*41,z=-2+Math.sin(a)*31;if(Math.abs(x)<30&&z>12)continue;box(1.6,1.3,1.5,x,.65,z,i%3?stone:green,Math.random()*.3)}
+for(const x of [-16,16]){cylinder(.55,.8,1.8,x,.9,-27,paleStone,8);cylinder(.8,.55,.4,x,2,-27,stone,8);const glow=new THREE.PointLight(0xffa24d,1.4,12);glow.position.set(x,3,-27);scene.add(glow);const flame=new THREE.Mesh(new THREE.ConeGeometry(.3,1,8),new THREE.MeshBasicMaterial({color:0xffb24b}));flame.position.set(x,2.8,-27);scene.add(flame)}
+// Drifting petals.
+const count=260,positions=new Float32Array(count*3);for(let i=0;i<count;i++){positions[i*3]=(Math.random()-.5)*115;positions[i*3+1]=Math.random()*20;positions[i*3+2]=-65+Math.random()*90}
+const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(positions,3));scene.add(new THREE.Points(pg,new THREE.PointsMaterial({color:0xffc5d8,size:.42,transparent:true,opacity:.9,depthWrite:false})));
+let yaw=0,pitch=0,drag=false,lastX=0,lastY=0;
+function cameraPlace(){const r=91;camera.position.set(Math.sin(yaw)*r,57-pitch*12,Math.cos(yaw)*r);camera.lookAt(0,3,-16)}
+stage.addEventListener('pointerdown',e=>{drag=true;lastX=e.clientX;lastY=e.clientY;stage.setPointerCapture(e.pointerId);stage.style.cursor='grabbing'});stage.addEventListener('pointerup',()=>{drag=false;stage.style.cursor='grab'});stage.addEventListener('pointermove',e=>{if(!drag)return;yaw=THREE.MathUtils.clamp(yaw+(e.clientX-lastX)*.004,-1.1,1.1);pitch=THREE.MathUtils.clamp(pitch-(e.clientY-lastY)*.004,-.2,.5);lastX=e.clientX;lastY=e.clientY});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);const t=clock.getElapsedTime();banners.forEach((b,i)=>b.rotation.y=Math.sin(t*1.4+i)*.18);const p=pg.attributes.position;for(let i=0;i<count;i++){p.array[i*3]+=.012;p.array[i*3+1]-=.02;p.array[i*3+2]+=.005*Math.sin(t+i);if(p.array[i*3+1]<.1){p.array[i*3+1]=18+Math.random()*4;p.array[i*3]=(Math.random()-.5)*115;p.array[i*3+2]=-65+Math.random()*90}if(p.array[i*3]>60)p.array[i*3]=-60}p.needsUpdate=true;cameraPlace();renderer.render(scene,camera)}cameraPlace();animate();
+})();
+</script></body></html>
